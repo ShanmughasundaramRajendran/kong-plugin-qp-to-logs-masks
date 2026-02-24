@@ -1,0 +1,78 @@
+_format_version: "3.0"
+
+consumers:
+  - username: demo-consumer-app
+    custom_id: qp-client-001
+    keyauth_credentials:
+      - key: demo-consumer-apikey
+  - username: demo-consumer-app-2
+    custom_id: qp-client-002
+    keyauth_credentials:
+      - key: demo-consumer-apikey-2
+
+services:
+  - name: qp-mask-service
+    url: http://httpbin:80/anything
+    routes:
+      - name: qp-mask-route
+        paths:
+          - /mask
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - apikey
+              hide_credentials: true
+          - name: qp-to-logs-masks
+            config:
+              query_params: token,user
+              separator: "|"
+              output_field: qp_log
+              add_response_header: true
+              response_header_name: X-Kong-QP-Log
+              masks:
+                - regex: "(.{4}).+(.{2})"
+                  replace: "$1***$2"
+      - name: qp-mask-no-header-route
+        paths:
+          - /mask-no-header
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - apikey
+              hide_credentials: true
+          - name: qp-to-logs-masks
+            config:
+              query_params: token,user
+              separator: "|"
+              output_field: qp_log_no_header
+              add_response_header: false
+              masks:
+                - regex: "(.{4}).+(.{2})"
+                  replace: "$1***$2"
+      - name: qp-mask-advanced-route
+        paths:
+          - /mask-advanced
+        plugins:
+          - name: key-auth
+            config:
+              key_names:
+                - apikey
+              hide_credentials: true
+          - name: qp-to-logs-masks
+            config:
+              query_params: key1,qparam2,epqp1,epqparam2,password
+              separator: "|"
+              output_field: qp_log_advanced
+              add_response_header: true
+              response_header_name: X-Kong-QP-Log-Advanced
+              masks:
+                - regex: "xyz123"
+                  replace: "mask_value"
+                - regex: "ep_pattern"
+                  replace: "mask_value_ep"
+                - regex: "^(0x)?[a-fA-F0-9]+$"
+                  replace: "mask_secret"
+                - regex: "^[A-Za-z0-9]{12,}$"
+                  replace: "(masked)"

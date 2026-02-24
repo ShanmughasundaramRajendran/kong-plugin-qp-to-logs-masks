@@ -1,0 +1,21 @@
+meta {
+  name: Masked token and user
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/mask?token=abcDEF123456&user=cognizant
+  body: none
+  auth: none
+}
+
+params:query {
+  token: abcDEF123456
+  user: cognizant
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

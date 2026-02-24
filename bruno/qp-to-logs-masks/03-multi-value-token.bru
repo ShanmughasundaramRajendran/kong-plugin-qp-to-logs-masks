@@ -1,0 +1,22 @@
+meta {
+  name: Multi value token
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/mask
+  body: none
+  auth: none
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}
+
+params:query {
+  token: abcDEF123456
+  token: ZZZZYYYYXXXX12
+  user: bob
+}
