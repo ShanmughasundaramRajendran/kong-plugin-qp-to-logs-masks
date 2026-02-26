@@ -1,0 +1,21 @@
+meta {
+  name: Custom format route
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{base_url}}/mask-custom-format?token=abcDEF123456&user=cognizant
+  body: none
+  auth: none
+}
+
+params:query {
+  token: abcDEF123456
+  user: cognizant
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

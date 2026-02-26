@@ -1,8 +1,8 @@
-package = "kong-plugin-qp-to-logs-masks"
+package = "kong-plugin-qp-log-mask"
 version = "1.0.0-1"
 
 source = {
-  url = "git://example.com/kong-plugin-qp-to-logs-masks",
+  url = "git://example.com/kong-plugin-qp-log-mask",
   tag = "1.0.0"
 }
 
@@ -20,8 +20,8 @@ dependencies = { "lua >= 5.1" }
 build = {
   type = "builtin",
   modules = {
-    ["kong.plugins.qp-to-logs-masks.init"]    = "kong/plugins/qp-to-logs-masks/init.lua",
-    ["kong.plugins.qp-to-logs-masks.handler"] = "kong/plugins/qp-to-logs-masks/handler.lua",
-    ["kong.plugins.qp-to-logs-masks.schema"]  = "kong/plugins/qp-to-logs-masks/schema.lua",
+    ["kong.plugins.qp-log-mask.init"]    = "kong/plugins/qp-log-mask/init.lua",
+    ["kong.plugins.qp-log-mask.handler"] = "kong/plugins/qp-log-mask/handler.lua",
+    ["kong.plugins.qp-log-mask.schema"]  = "kong/plugins/qp-log-mask/schema.lua",
   }
 }

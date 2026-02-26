@@ -2,4 +2,4 @@ FROM kong:latest
 
 USER root
 
-ENV KONG_PLUGINS=bundled,qp-to-logs-masks
+ENV KONG_PLUGINS=bundled,qp-log-mask

@@ -1,0 +1,16 @@
+meta {
+  name: No header route
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/mask-no-header?token=abcDEF123456&user=cognizant
+  body: none
+  auth: none
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

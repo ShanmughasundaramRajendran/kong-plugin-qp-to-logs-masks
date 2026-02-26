@@ -1,11 +1,11 @@
 meta {
-  name: Only user
+  name: Empty token not appended
   type: http
-  seq: 2
+  seq: 6
 }
 
 get {
-  url: {{base_url}}/mask
+  url: {{base_url}}/mask?token=&user=cognizant
   body: none
   auth: none
 }
@@ -13,8 +13,4 @@ get {
 headers {
   apikey: {{apikey_c1}}
   Accept: application/json
-}
-
-params:query {
-  user: bob
 }

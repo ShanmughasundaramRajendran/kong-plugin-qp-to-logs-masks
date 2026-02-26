@@ -1,8 +1,8 @@
 {
-  "name": "kong-plugin-qp-to-logs-masks-functional-tests",
+  "name": "kong-plugin-qp-log-mask-functional-tests",
   "private": true,
   "version": "1.0.0",
-  "description": "Mocha functional tests for qp-to-logs-masks plugin",
+  "description": "Mocha functional tests for qp-log-mask plugin",
   "scripts": {
     "test:functional": "mocha --timeout 30000 \"test/functional/mocha/**/*.js\""
   },

@@ -1,4 +1,4 @@
-APP_NAME              := kong-qp-to-logs-masks
+APP_NAME              := kong-qp-log-mask
 COMPOSE               := docker compose
 DOCKER                := docker
 PONGO                 := pongo
@@ -103,7 +103,7 @@ test-mocha: test-functional
 
 ## bruno: Show Bruno collection path
 bruno:
-	@echo "Open Bruno collection at: bruno/qp-to-logs-masks"
+	@echo "Open Bruno collection at: bruno/qp-log-mask"
 
 ## manager: Print Kong Manager URL
 manager:

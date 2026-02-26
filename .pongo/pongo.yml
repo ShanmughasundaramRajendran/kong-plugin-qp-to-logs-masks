@@ -1,8 +1,8 @@
 kong_version: "3.13.0"
 
 plugins:
-  - name: qp-to-logs-masks
-    path: kong/plugins/qp-to-logs-masks
+  - name: qp-log-mask
+    path: kong/plugins/qp-log-mask
 
 env:
-  KONG_PLUGINS: bundled,qp-to-logs-masks
+  KONG_PLUGINS: bundled,qp-log-mask

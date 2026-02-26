@@ -1,0 +1,21 @@
+meta {
+  name: mask_advanced_03_req
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{base_url}}/mask-advanced?epqp1=12345abcdef12345abcdef&epqparam2=abcdefg
+  body: none
+  auth: none
+}
+
+params:query {
+  epqp1: 12345abcdef12345abcdef
+  epqparam2: abcdefg
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

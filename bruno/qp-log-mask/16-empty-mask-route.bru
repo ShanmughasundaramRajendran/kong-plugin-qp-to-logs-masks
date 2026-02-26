@@ -1,0 +1,20 @@
+meta {
+  name: Empty mask route
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{base_url}}/mask-empty-mask?token=abcxyz123def
+  body: none
+  auth: none
+}
+
+params:query {
+  token: abcxyz123def
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

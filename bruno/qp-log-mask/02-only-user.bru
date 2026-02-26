@@ -1,0 +1,20 @@
+meta {
+  name: Only user
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/mask?user=shanmugha
+  body: none
+  auth: none
+}
+
+params:query {
+  user: shanmugha
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

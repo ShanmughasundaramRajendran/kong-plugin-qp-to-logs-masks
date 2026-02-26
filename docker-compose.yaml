@@ -15,7 +15,7 @@ services:
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
       KONG_ADMIN_GUI_URL: http://localhost:8002
-      KONG_PLUGINS: bundled,qp-to-logs-masks
+      KONG_PLUGINS: bundled,qp-log-mask
       KONG_LOG_LEVEL: debug
     ports:
       - "8000:8000"
@@ -24,7 +24,7 @@ services:
       - "8444:8444"
       - "8002:8002"
     volumes:
-      - ./kong/plugins/qp-to-logs-masks:/usr/local/share/lua/5.1/kong/plugins/qp-to-logs-masks:ro
+      - ./kong/plugins/qp-log-mask:/usr/local/share/lua/5.1/kong/plugins/qp-log-mask:ro
       - ./config/kong.yml:/etc/kong/kong.yml:ro
     networks:
       - kong-net

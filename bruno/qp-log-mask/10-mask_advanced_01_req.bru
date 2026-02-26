@@ -1,0 +1,16 @@
+meta {
+  name: mask_advanced_01_req
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{base_url}}/mask-advanced?key1=will_not_mask1&qparam2=xyz123
+  body: none
+  auth: none
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}

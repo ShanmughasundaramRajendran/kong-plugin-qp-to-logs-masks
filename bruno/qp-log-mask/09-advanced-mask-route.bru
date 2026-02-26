@@ -1,0 +1,21 @@
+meta {
+  name: Advanced mask route
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{base_url}}/mask-advanced?key1=will_not_mask1&qparam2=xyz123
+  body: none
+  auth: none
+}
+
+params:query {
+  key1: will_not_mask1
+  qparam2: xyz123
+}
+
+headers {
+  apikey: {{apikey_c1}}
+  Accept: application/json
+}
