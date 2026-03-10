@@ -5,7 +5,7 @@ local QPToLogsMasks = {
 }
 
 -- Phase map for this plugin:
--- 1) access phase: collect/mask query params and optionally set response header.
+-- 1) access phase: collect/mask query params and cache masked value in ctx.
 -- 2) log phase: write final masked value to Kong log serializer field.
 -- This plugin does not implement rewrite, header_filter, body_filter, or response phases.
 
@@ -128,7 +128,6 @@ function QPToLogsMasks:access(conf)
   -- ACCESS PHASE:
   -- Build the final "QP_<key>:<value>" payload from request query params.
   -- Store it in kong.ctx.plugin for later use in log phase.
-  -- Optionally expose it via response header for debugging/validation.
 
   -- Explicit hard stop when plugin is disabled in config.
   if conf.enabled == false then
@@ -164,11 +163,6 @@ function QPToLogsMasks:access(conf)
   local final = table_concat(qp_log, conf.separator or "|")
   -- Keep final value in request context for use during log phase.
   kong.ctx.plugin.qp_log_masks_value = final
-
-  -- Optional debug surface for quick validation in client tools.
-  if conf.add_response_header then
-    kong.response.set_header(conf.response_header_name, final)
-  end
 end
 
 function QPToLogsMasks:log(conf)

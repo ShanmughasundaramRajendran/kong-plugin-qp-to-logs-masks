@@ -65,7 +65,7 @@ return {
             }
           },
 
-          -- Mirrors masked value in response header for manual verification/debug.
+          -- Deprecated compatibility fields; response headers are no longer emitted.
           { add_response_header = { type = "boolean", required = true, default = false } },
           { response_header_name = { type = "string", required = true, default = "X-Kong-QP-Log" } },
         },

@@ -3,8 +3,7 @@
 `qp-log-mask` is a Kong plugin that:
 - reads selected query params from incoming requests,
 - masks sensitive values using ordered regex rules,
-- writes the final string into Kong log serializer,
-- optionally adds the same value to a response header.
+- writes the final string into Kong log serializer.
 
 ## Why this plugin
 Use this when you want query param visibility in logs without exposing raw secrets like tokens/passwords.
@@ -16,7 +15,6 @@ For each request:
 3. Apply masks in order (`config.query_params_log_mask` using `ngx.re.gsub`).
 4. Join all entries with `config.separator`.
 5. Write result to serializer field `config.output_field`.
-6. If `config.add_response_header=true`, set `config.response_header_name`.
 
 Example output:
 `QP_token:abcD***56|QP_user:cogn***nt`
@@ -28,8 +26,8 @@ Example output:
 - `query_params_log_mask`: Ordered list of `{ pattern, mask }`
 - `separator`: Join separator between query entries (default `|`)
 - `output_field`: Serializer field name for logs (example `qp_log`)
-- `add_response_header`: Whether to include masked value in response header
-- `response_header_name`: Header name when enabled (example `X-Kong-QP-Log`)
+- `add_response_header`: Deprecated compatibility field (ignored)
+- `response_header_name`: Deprecated compatibility field (ignored)
 
 ## Local setup
 This repo uses the same structure style as `kong-plugin-oauth-client-context`:
@@ -42,9 +40,9 @@ This repo uses the same structure style as `kong-plugin-oauth-client-context`:
 
 ## Routes in local config
 From [config/kong.yml](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/config/kong.yml):
-- `/mask`: header enabled (`X-Kong-QP-Log`)
-- `/mask-no-header`: header disabled
-- `/mask-advanced`: advanced masks, header `X-Kong-QP-Log-Advanced`
+- `/mask`: masked query params are written to log serializer field
+- `/mask-no-header`: kept for backward compatibility tests
+- `/mask-advanced`: advanced masks with the same log serializer behavior
 
 All routes are protected with `key-auth`.
 
@@ -62,13 +60,10 @@ curl -i \
   -H "apikey: demo-consumer-apikey" \
   "http://localhost:8000/mask?token=abcDEF123456&user=cognizant"
 # Expect header:
-# X-Kong-QP-Log: QP_token:abcD***56|QP_user:cogn***nt
+# no X-Kong-QP-Log response header is returned
 ```
 
 ## Where masked data appears
-- Response header (if enabled):
-  - `/mask` -> `X-Kong-QP-Log`
-  - `/mask-advanced` -> `X-Kong-QP-Log-Advanced`
 - Kong logs serializer field (`output_field`) in proxy logs.
 
 Check logs:
@@ -108,11 +103,8 @@ Use environment:
 - [bruno/qp-log-mask/environments/Local.bru](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/bruno/qp-log-mask/environments/Local.bru)
 
 ## Troubleshooting
-- Header not visible on `/mask`:
-  - ensure query keys match configured `query_params_to_log`
-  - use `curl -i` (some clients hide headers)
-- No header on `/mask-no-header`:
-  - expected (`add_response_header=false`)
+- No `X-Kong-QP-Log` header on any route:
+  - expected behavior; headers are no longer emitted
 - Kong not starting:
   - run `docker compose logs kong` and check schema/config errors
 

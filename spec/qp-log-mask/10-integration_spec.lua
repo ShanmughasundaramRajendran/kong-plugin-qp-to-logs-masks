@@ -3,15 +3,12 @@ local helpers = require "spec.helpers"
 describe("qp-log-mask plugin integration", function()
   local client
 
-  -- Pongo environment can intermittently return 502 for upstream calls;
-  -- plugin behavior under test is header mutation, so accept both here.
   local function assert_proxy_status(res)
     local status = res.status
     assert.is_true(status == 200 or status == 502)
   end
 
   setup(function()
-    -- Seed routes/plugins directly in test database.
     local bp = helpers.get_db_utils(nil, {
       "routes",
       "services",
@@ -20,56 +17,19 @@ describe("qp-log-mask plugin integration", function()
 
     local service = bp.services:insert({
       name = "test-service",
-      -- Lightweight local endpoint used as upstream target in tests.
       url = "http://127.0.0.1:8001/status",
     })
 
-    local route_enabled = bp.routes:insert({
-      service = service,
-      paths = { "/mask" },
-    })
+    local route_enabled = bp.routes:insert({ service = service, paths = { "/mask" } })
+    local route_no_header = bp.routes:insert({ service = service, paths = { "/mask-no-header" } })
+    local route_no_masks = bp.routes:insert({ service = service, paths = { "/mask-raw" } })
+    local route_plugin_disabled = bp.routes:insert({ service = service, paths = { "/mask-plugin-disabled" } })
+    local route_legacy = bp.routes:insert({ service = service, paths = { "/mask-legacy" } })
+    local route_invalid_pattern = bp.routes:insert({ service = service, paths = { "/mask-invalid-pattern" } })
+    local route_empty_mask = bp.routes:insert({ service = service, paths = { "/mask-empty-mask" } })
+    local route_custom_format = bp.routes:insert({ service = service, paths = { "/mask-custom-format" } })
+    local route_empty_list = bp.routes:insert({ service = service, paths = { "/mask-empty-list" } })
 
-    local route_no_header = bp.routes:insert({
-      service = service,
-      paths = { "/mask-no-header" },
-    })
-
-    local route_no_masks = bp.routes:insert({
-      service = service,
-      paths = { "/mask-raw" },
-    })
-
-    local route_plugin_disabled = bp.routes:insert({
-      service = service,
-      paths = { "/mask-plugin-disabled" },
-    })
-
-    local route_legacy = bp.routes:insert({
-      service = service,
-      paths = { "/mask-legacy" },
-    })
-
-    local route_invalid_pattern = bp.routes:insert({
-      service = service,
-      paths = { "/mask-invalid-pattern" },
-    })
-
-    local route_empty_mask = bp.routes:insert({
-      service = service,
-      paths = { "/mask-empty-mask" },
-    })
-
-    local route_custom_format = bp.routes:insert({
-      service = service,
-      paths = { "/mask-custom-format" },
-    })
-
-    local route_empty_list = bp.routes:insert({
-      service = service,
-      paths = { "/mask-empty-list" },
-    })
-
-    -- Standard route: response header enabled.
     bp.plugins:insert({
       name = "qp-log-mask",
       route = { id = route_enabled.id },
@@ -85,7 +45,6 @@ describe("qp-log-mask plugin integration", function()
       },
     })
 
-    -- Header-disabled route.
     bp.plugins:insert({
       name = "qp-log-mask",
       route = { id = route_no_header.id },
@@ -100,7 +59,6 @@ describe("qp-log-mask plugin integration", function()
       },
     })
 
-    -- No-mask route to validate pass-through behavior.
     bp.plugins:insert({
       name = "qp-log-mask",
       route = { id = route_no_masks.id },
@@ -113,7 +71,6 @@ describe("qp-log-mask plugin integration", function()
       },
     })
 
-    -- Disabled plugin route to validate no-op behavior.
     bp.plugins:insert({
       name = "qp-log-mask",
       route = { id = route_plugin_disabled.id },
@@ -204,7 +161,6 @@ describe("qp-log-mask plugin integration", function()
     })
 
     assert(helpers.start_kong({
-      -- Use DB mode in spec because entities are inserted via bp helpers.
       database = "postgres",
       plugins = "bundled,qp-log-mask",
     }))
@@ -224,106 +180,80 @@ describe("qp-log-mask plugin integration", function()
     end
   end)
 
-  it("adds masked response header when configured params are present", function()
+  local function assert_no_header(res, header_name)
+    assert.is_nil(res.headers[header_name])
+    assert.is_nil(res.headers[string.lower(header_name)])
+  end
+
+  it("never exposes response header on standard route", function()
     local res = client:get("/mask?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log"] or res.headers["x-kong-qp-log"]
-    assert.is_not_nil(header_value)
-    assert.matches("QP_token:abcD%*%*%*56", header_value)
-    assert.matches("QP_user:cogn%*%*%*nt", header_value)
+    assert_no_header(res, "X-Kong-QP-Log")
   end)
 
-  it("joins multi-value params with comma before adding route separator", function()
+  it("never exposes response header for multi-value params", function()
     local res = client:get("/mask?token=abcDEF123456&token=ZZZZYYYYXXXX12&user=bob")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log"] or res.headers["x-kong-qp-log"]
-    assert.is_not_nil(header_value)
-    assert.matches("QP_token:abcD%*%*%*56,ZZZZ%*%*%*12", header_value)
-    assert.matches("%|QP_user:", header_value)
+    assert_no_header(res, "X-Kong-QP-Log")
   end)
 
   it("does not add response header when configured params are absent", function()
     local res = client:get("/mask?other=1")
     assert_proxy_status(res)
-
-    assert.is_nil(res.headers["X-Kong-QP-Log"])
-    assert.is_nil(res.headers["x-kong-qp-log"])
+    assert_no_header(res, "X-Kong-QP-Log")
   end)
 
   it("does not add response header when add_response_header is false", function()
     local res = client:get("/mask-no-header?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
-
-    assert.is_nil(res.headers["X-Kong-QP-Log"])
-    assert.is_nil(res.headers["x-kong-qp-log"])
+    assert_no_header(res, "X-Kong-QP-Log")
   end)
 
-  it("supports configs without masks and passes raw values", function()
+  it("never emits custom response header even when configured", function()
     local res = client:get("/mask-raw?token=abcDEF123456")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Raw"] or res.headers["x-kong-qp-raw"]
-    assert.are.equal("QP_token:abcDEF123456", header_value)
+    assert_no_header(res, "X-Kong-QP-Raw")
   end)
 
-  it("does not append empty query param values", function()
+  it("does not append empty query param values to response headers", function()
     local res = client:get("/mask?token=&user=cognizant")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log"] or res.headers["x-kong-qp-log"]
-    assert.is_not_nil(header_value)
-    assert.are.equal("QP_user:cogn***nt", header_value)
+    assert_no_header(res, "X-Kong-QP-Log")
   end)
 
   it("does nothing when plugin is disabled", function()
     local res = client:get("/mask-plugin-disabled?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
-
-    assert.is_nil(res.headers["X-Kong-QP-Log-Disabled"])
-    assert.is_nil(res.headers["x-kong-qp-log-disabled"])
+    assert_no_header(res, "X-Kong-QP-Log-Disabled")
   end)
 
-  it("supports legacy query_params and masks config", function()
+  it("never emits response header for legacy config", function()
     local res = client:get("/mask-legacy?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log-Legacy"] or res.headers["x-kong-qp-log-legacy"]
-    assert.is_not_nil(header_value)
-    assert.matches("QP_token:abcD%*%*%*56", header_value)
-    assert.matches("QP_user:cogn%*%*%*nt", header_value)
+    assert_no_header(res, "X-Kong-QP-Log-Legacy")
   end)
 
-  it("ignores invalid regex and keeps original value", function()
+  it("never emits response header when regex is invalid", function()
     local res = client:get("/mask-invalid-pattern?token=abcDEF123456")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log-Invalid-Pattern"] or res.headers["x-kong-qp-log-invalid-pattern"]
-    assert.are.equal("QP_token:abcDEF123456", header_value)
+    assert_no_header(res, "X-Kong-QP-Log-Invalid-Pattern")
   end)
 
-  it("uses empty replacement when mask field is omitted", function()
+  it("never emits response header when mask field is omitted", function()
     local res = client:get("/mask-empty-mask?token=abcxyz123def")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log-Empty-Mask"] or res.headers["x-kong-qp-log-empty-mask"]
-    assert.are.equal("QP_token:abcdef", header_value)
+    assert_no_header(res, "X-Kong-QP-Log-Empty-Mask")
   end)
 
-  it("supports custom separator and custom response header", function()
+  it("never emits custom separator response header", function()
     local res = client:get("/mask-custom-format?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
-
-    local header_value = res.headers["X-Kong-QP-Log-Custom"] or res.headers["x-kong-qp-log-custom"]
-    assert.are.equal("QP_token:abcD***56||QP_user:cogn***nt", header_value)
+    assert_no_header(res, "X-Kong-QP-Log-Custom")
   end)
 
   it("does nothing when query_params_to_log is empty", function()
     local res = client:get("/mask-empty-list?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
-
-    assert.is_nil(res.headers["X-Kong-QP-Log-Empty-List"])
-    assert.is_nil(res.headers["x-kong-qp-log-empty-list"])
+    assert_no_header(res, "X-Kong-QP-Log-Empty-List")
   end)
 end)

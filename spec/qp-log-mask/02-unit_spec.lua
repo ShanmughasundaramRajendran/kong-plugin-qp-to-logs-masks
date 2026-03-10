@@ -73,10 +73,7 @@ describe("qp-log-mask handler unit", function()
 
     handler:access(conf)
 
-    assert.are.same({
-      name = "X-Kong-QP-Log",
-      value = "QP_token:abc***def|QP_user:bob",
-    }, captured_header)
+    assert.is_nil(captured_header)
     assert.are.equal("QP_token:abc***def|QP_user:bob", kong_stub.ctx.plugin.qp_log_masks_value)
 
     handler:log(conf)
@@ -133,10 +130,8 @@ describe("qp-log-mask handler unit", function()
     }
 
     handler:access(conf)
-    assert.are.same({
-      name = "X-Kong-QP-Log-Legacy",
-      value = "QP_token:abcMASKdef|QP_user:alice",
-    }, captured_header)
+    assert.is_nil(captured_header)
+    assert.are.equal("QP_token:abcMASKdef|QP_user:alice", kong_stub.ctx.plugin.qp_log_masks_value)
   end)
 
   it("ignores empty values and invalid regex failures safely", function()
@@ -169,9 +164,7 @@ describe("qp-log-mask handler unit", function()
 
     handler:access(conf)
 
-    assert.are.same({
-      name = "X-Kong-QP-Log",
-      value = "QP_user:bob",
-    }, captured_header)
+    assert.is_nil(captured_header)
+    assert.are.equal("QP_user:bob", kong_stub.ctx.plugin.qp_log_masks_value)
   end)
 end)
