@@ -67,8 +67,8 @@ describe("qp-log-mask schema", function()
     end)
   end)
 
-  it("accepts legacy query_params + masks keys for backward compatibility", function()
-    assert.has_no.errors(function()
+  it("rejects removed legacy query_params + masks keys", function()
+    assert.has_error(function()
       insert_plugin({
         query_params = "token,user",
         masks = {

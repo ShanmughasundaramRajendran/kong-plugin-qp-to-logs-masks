@@ -2,7 +2,7 @@ APP_NAME              := kong-qp-log-mask
 COMPOSE               := docker compose
 DOCKER                := docker
 PONGO                 := pongo
-NPM                   := npm
+PYTHON                := python3
 KONG_ADMIN_URL        := http://localhost:8001
 KONG_MANAGER_URL      := http://localhost:8002
 BASE_PROXY_URL        := http://localhost:8000
@@ -90,16 +90,17 @@ pongo-down:
 ## test: Alias for pongo-test
 test: pongo-test
 
-## npm-install: Install Node.js dependencies for mocha tests
-npm-install:
-	$(NPM) install
+## install-pytest: Install Python dependencies for pytest functional tests
+install-pytest:
+	$(PYTHON) -m pip install -r tests/functional/pytest/requirements-test.txt
 
-## test-functional: Run mocha functional suite (requires local stack up)
+## test-functional: Run pytest functional suite (requires local stack up)
 test-functional:
-	$(NPM) run test:functional
+	@BASE_URL=$(BASE_PROXY_URL) ADMIN_URL=$(KONG_ADMIN_URL) APIKEY_C1=$(APIKEY_C1) \
+	$(PYTHON) -m pytest -c tests/functional/pytest/pytest.ini tests/functional/pytest
 
-## test-mocha: Alias for test-functional
-test-mocha: test-functional
+## test-all: Run pongo tests and pytest functional tests
+test-all: pongo-test install-pytest test-functional
 
 ## bruno: Show Bruno collection path
 bruno:
@@ -109,9 +110,8 @@ bruno:
 manager:
 	@echo "Kong Manager: $(KONG_MANAGER_URL)"
 
-## clean: Remove local node modules and bring stack down with volumes
+## clean: Bring stack down with volumes
 clean:
-	rm -rf node_modules
 	$(COMPOSE) down -v
 
 ## prune: Docker system prune

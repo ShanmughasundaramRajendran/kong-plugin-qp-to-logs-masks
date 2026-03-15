@@ -24,8 +24,6 @@ describe("qp-log-mask plugin integration", function()
     local route_no_header = bp.routes:insert({ service = service, paths = { "/mask-no-header" } })
     local route_no_masks = bp.routes:insert({ service = service, paths = { "/mask-raw" } })
     local route_plugin_disabled = bp.routes:insert({ service = service, paths = { "/mask-plugin-disabled" } })
-    local route_legacy = bp.routes:insert({ service = service, paths = { "/mask-legacy" } })
-    local route_invalid_pattern = bp.routes:insert({ service = service, paths = { "/mask-invalid-pattern" } })
     local route_empty_mask = bp.routes:insert({ service = service, paths = { "/mask-empty-mask" } })
     local route_custom_format = bp.routes:insert({ service = service, paths = { "/mask-custom-format" } })
     local route_empty_list = bp.routes:insert({ service = service, paths = { "/mask-empty-list" } })
@@ -37,8 +35,6 @@ describe("qp-log-mask plugin integration", function()
         query_params_to_log = { "token", "user" },
         separator = "|",
         output_field = "qp_log",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log",
         query_params_log_mask = {
           { pattern = "(.{4}).+(.{2})", mask = "$1***$2" },
         },
@@ -52,7 +48,6 @@ describe("qp-log-mask plugin integration", function()
         query_params_to_log = { "token", "user" },
         separator = "|",
         output_field = "qp_log_no_header",
-        add_response_header = false,
         query_params_log_mask = {
           { pattern = "(.{4}).+(.{2})", mask = "$1***$2" },
         },
@@ -66,8 +61,6 @@ describe("qp-log-mask plugin integration", function()
         query_params_to_log = { "token" },
         separator = "|",
         output_field = "qp_log_raw",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Raw",
       },
     })
 
@@ -76,44 +69,11 @@ describe("qp-log-mask plugin integration", function()
       route = { id = route_plugin_disabled.id },
       config = {
         enabled = false,
-        error_format = "default",
         query_params_to_log = { "token", "user" },
         separator = "|",
         output_field = "qp_log_disabled",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log-Disabled",
         query_params_log_mask = {
           { pattern = "(.{4}).+(.{2})", mask = "$1***$2" },
-        },
-      },
-    })
-
-    bp.plugins:insert({
-      name = "qp-log-mask",
-      route = { id = route_legacy.id },
-      config = {
-        query_params = "token,user",
-        separator = "|",
-        output_field = "qp_log_legacy",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log-Legacy",
-        masks = {
-          { regex = "(.{4}).+(.{2})", replace = "$1***$2" },
-        },
-      },
-    })
-
-    bp.plugins:insert({
-      name = "qp-log-mask",
-      route = { id = route_invalid_pattern.id },
-      config = {
-        query_params_to_log = { "token" },
-        separator = "|",
-        output_field = "qp_log_invalid_pattern",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log-Invalid-Pattern",
-        query_params_log_mask = {
-          { pattern = "[", mask = "never_used" },
         },
       },
     })
@@ -125,8 +85,6 @@ describe("qp-log-mask plugin integration", function()
         query_params_to_log = { "token" },
         separator = "|",
         output_field = "qp_log_empty_mask",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log-Empty-Mask",
         query_params_log_mask = {
           { pattern = "xyz123" },
         },
@@ -140,8 +98,6 @@ describe("qp-log-mask plugin integration", function()
         query_params_to_log = { "token", "user" },
         separator = "||",
         output_field = "qp_log_custom",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log-Custom",
         query_params_log_mask = {
           { pattern = "(.{4}).+(.{2})", mask = "$1***$2" },
         },
@@ -155,8 +111,6 @@ describe("qp-log-mask plugin integration", function()
         query_params_to_log = {},
         separator = "|",
         output_field = "qp_log_empty_list",
-        add_response_header = true,
-        response_header_name = "X-Kong-QP-Log-Empty-List",
       },
     })
 
@@ -203,7 +157,7 @@ describe("qp-log-mask plugin integration", function()
     assert_no_header(res, "X-Kong-QP-Log")
   end)
 
-  it("does not add response header when add_response_header is false", function()
+  it("does not add response header on alternate route", function()
     local res = client:get("/mask-no-header?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
     assert_no_header(res, "X-Kong-QP-Log")
@@ -225,18 +179,6 @@ describe("qp-log-mask plugin integration", function()
     local res = client:get("/mask-plugin-disabled?token=abcDEF123456&user=cognizant")
     assert_proxy_status(res)
     assert_no_header(res, "X-Kong-QP-Log-Disabled")
-  end)
-
-  it("never emits response header for legacy config", function()
-    local res = client:get("/mask-legacy?token=abcDEF123456&user=cognizant")
-    assert_proxy_status(res)
-    assert_no_header(res, "X-Kong-QP-Log-Legacy")
-  end)
-
-  it("never emits response header when regex is invalid", function()
-    local res = client:get("/mask-invalid-pattern?token=abcDEF123456")
-    assert_proxy_status(res)
-    assert_no_header(res, "X-Kong-QP-Log-Invalid-Pattern")
   end)
 
   it("never emits response header when mask field is omitted", function()

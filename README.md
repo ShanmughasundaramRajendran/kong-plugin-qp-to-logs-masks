@@ -1,114 +1,105 @@
-# Kong Plugin: QP To Logs Masks
+# Kong Plugin: QP Log Mask (`qp-log-mask`)
 
-`qp-log-mask` is a Kong plugin that:
-- reads selected query params from incoming requests,
-- masks sensitive values using ordered regex rules,
-- writes the final string into Kong log serializer.
+`qp-log-mask` captures selected query parameters, applies ordered masking rules, and writes the final masked value into Kong's structured log serializer.
 
-## Why this plugin
-Use this when you want query param visibility in logs without exposing raw secrets like tokens/passwords.
+## Scope of the Plugin
 
-## How it works
-For each request:
-1. Read configured query params from `config.query_params_to_log` (array of keys).
-2. For each matching non-empty param, build `QP_<param>:<value>`.
-3. Apply masks in order (`config.query_params_log_mask` using `ngx.re.gsub`).
-4. Join all entries with `config.separator`.
-5. Write result to serializer field `config.output_field`.
+What this plugin does:
+- Reads configured query parameters from incoming HTTP requests.
+- Masks parameter values using ordered regex rules.
+- Produces a compact formatted token list such as `QP_token:abc***def|QP_user:bob`.
+- Stores the final value in `kong.log.set_serialize_value(config.output_field, value)`.
 
-Example output:
-`QP_token:abcD***56|QP_user:cogn***nt`
+What this plugin does not do:
+- It does not emit query-mask data in response headers.
+- It does not modify upstream request payloads.
 
-## Key config fields
-- `enabled`: Boolean switch for plugin execution (default `true`)
-- `error_format`: String option kept for Janus compatibility (default `default`)
-- `query_params_to_log`: Array of query keys to capture (example: `["token","user"]`)
-- `query_params_log_mask`: Ordered list of `{ pattern, mask }`
-- `separator`: Join separator between query entries (default `|`)
-- `output_field`: Serializer field name for logs (example `qp_log`)
-- `add_response_header`: Deprecated compatibility field (ignored)
-- `response_header_name`: Deprecated compatibility field (ignored)
+## How It Works (End-to-End)
 
-## Local setup
-This repo uses the same structure style as `kong-plugin-oauth-client-context`:
-- [Dockerfile](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/Dockerfile)
-- [docker-compose.yaml](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/docker-compose.yaml)
-- [config/kong.yml](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/config/kong.yml)
-- [.pongo/pongo.yml](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/.pongo/pongo.yml)
-- [spec/qp_to_logs_masks_spec.lua](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/spec/qp_to_logs_masks_spec.lua)
-- [test/functional/mocha/qp_to_logs_masks/qp_log_masks_test.js](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/test/functional/mocha/qp_to_logs_masks/qp_log_masks_test.js)
+1. `access` phase:
+- Read request query params.
+- For each configured key, collect value(s), normalize empty/nil, apply masks in order.
+- Build entries in format `QP_<key>:<masked_values>`.
+- Join entries with `config.separator` (default `|`) and cache in `kong.ctx.plugin.qp_log_masks_value`.
 
-## Routes in local config
-From [config/kong.yml](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/config/kong.yml):
-- `/mask`: masked query params are written to log serializer field
-- `/mask-no-header`: kept for backward compatibility tests
-- `/mask-advanced`: advanced masks with the same log serializer behavior
+Failure behavior:
+- The plugin is strict. Invalid runtime masking operations (for example malformed regex patterns) are not swallowed and will fail request processing.
 
-All routes are protected with `key-auth`.
+2. `log` phase:
+- Read cached value from `kong.ctx.plugin`.
+- Write value to serializer field `config.output_field` (default `qp_log`).
 
-## Quick start (with comments)
+## Key Config Fields
+
+- `enabled` (bool, default `true`): global on/off switch.
+- `query_params_to_log` (array[string]): list of query keys to capture.
+- `query_params_log_mask` (array[{ pattern, mask? }]): ordered mask rules.
+- `separator` (string, default `|`): delimiter between per-key tokens.
+- `output_field` (string, default `qp_log`): serializer field name.
+
+## Local Stack
+
+Main files:
+- `Dockerfile`
+- `docker-compose.yaml`
+- `config/kong.yml`
+- `kong/plugins/qp-log-mask/handler.lua`
+- `kong/plugins/qp-log-mask/schema.lua`
+
+Start stack:
 ```bash
-make build            # build local Kong image with plugin
-make up               # start Kong + httpbin
-make health           # check admin API health
-make enabled-plugins  # verify qp-log-mask is enabled
+make build
+make up
+make health
+make enabled-plugins
 ```
 
-## Smoke test (with comments)
+Smoke check:
 ```bash
-curl -i \
-  -H "apikey: demo-consumer-apikey" \
+curl -i -H "apikey: demo-consumer-apikey" \
   "http://localhost:8000/mask?token=abcDEF123456&user=cognizant"
-# Expect header:
-# no X-Kong-QP-Log response header is returned
-```
-
-## Where masked data appears
-- Kong logs serializer field (`output_field`) in proxy logs.
-
-Check logs:
-```bash
-docker compose logs -f kong
+# Expected: no X-Kong-QP-Log response header
 ```
 
 ## Tests
-### Unit tests (Pongo)
+
+### Unit/Integration (Pongo)
 ```bash
-make pongo-up     # start pongo dependencies
-make pongo-test   # run busted specs
-make pongo-down   # stop pongo dependencies
+make pongo-test
 ```
 
-Shortcut:
+### Functional (Pytest)
+Install dependencies:
 ```bash
-make test
+make install-pytest
 ```
 
-### Functional tests (Mocha)
+Run functional suite:
 ```bash
-make npm-install      # install mocha deps
-make test-functional  # run functional suite
+make test-functional
 ```
 
-Environment overrides:
-- `BASE_URL` (default `http://localhost:8000`)
-- `ADMIN_URL` (default `http://localhost:8001`)
-- `APIKEY_C1` (default `demo-consumer-apikey`)
+Run all suites:
+```bash
+make test-all
+```
 
-## Bruno
-Import collection folder:
-- [bruno/qp-log-mask](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/bruno/qp-log-mask)
+Environment overrides used by functional tests:
+- `BASE_URL` (default from Makefile: `http://localhost:8000`)
+- `ADMIN_URL` (default from Makefile: `http://localhost:8001`)
+- `APIKEY_C1` (default from Makefile: `demo-consumer-apikey`)
 
-Use environment:
-- [bruno/qp-log-mask/environments/Local.bru](/Users/shanmughasundaramrajendran/kong-plugin-qp-to-logs-masks/bruno/qp-log-mask/environments/Local.bru)
+Functional test files:
+- `tests/functional/pytest/conftest.py`
+- `tests/functional/pytest/test_qp_log_mask.py`
 
-## Troubleshooting
-- No `X-Kong-QP-Log` header on any route:
-  - expected behavior; headers are no longer emitted
-- Kong not starting:
-  - run `docker compose logs kong` and check schema/config errors
+## Bruno Collection
 
-## Useful commands
+- `bruno/qp-log-mask`
+- `bruno/qp-log-mask/environments/Local.bru`
+
+## Useful Commands
+
 ```bash
 make help
 make build
@@ -118,5 +109,7 @@ make down
 make validate-config
 make test-smoke
 make pongo-test
+make install-pytest
 make test-functional
+make test-all
 ```

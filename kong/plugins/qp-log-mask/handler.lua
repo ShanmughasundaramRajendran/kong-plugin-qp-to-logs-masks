@@ -15,20 +15,6 @@ local table_concat = table.concat
 local table_insert = table.insert
 local type = type
 
-local function split_csv(s)
-  if not s or s == "" then
-    return {}
-  end
-  local out = {}
-  for part in s:gmatch("([^,]+)") do
-    part = part:gsub("^%s+", ""):gsub("%s+$", "")
-    if part ~= "" then
-      out[#out + 1] = part
-    end
-  end
-  return out
-end
-
 local function normalize_value(value)
   if value == nil then
     return nil
@@ -42,43 +28,6 @@ local function normalize_value(value)
   return v
 end
 
-local function normalize_masks(conf)
-  -- Preferred config key (new contract).
-  if conf.query_params_log_mask and #conf.query_params_log_mask > 0 then
-    return conf.query_params_log_mask
-  end
-
-  -- Backward compatibility for legacy { regex, replace } format.
-  if conf.masks and #conf.masks > 0 then
-    local out = {}
-    for _, legacy in ipairs(conf.masks) do
-      if legacy.regex then
-        out[#out + 1] = {
-          pattern = legacy.regex,
-          mask = legacy.replace or "",
-        }
-      end
-    end
-    return out
-  end
-
-  return {}
-end
-
-local function normalize_query_params(conf)
-  -- Preferred config key (new contract).
-  if conf.query_params_to_log and #conf.query_params_to_log > 0 then
-    return conf.query_params_to_log
-  end
-
-  -- Backward compatibility for legacy CSV field.
-  if conf.query_params and conf.query_params ~= "" then
-    return split_csv(conf.query_params)
-  end
-
-  return {}
-end
-
 local function apply_masks(value, masks)
   local v = normalize_value(value)
   if not v then
@@ -87,18 +36,8 @@ local function apply_masks(value, masks)
 
   -- Apply rules in order so later masks can transform earlier output.
   for _, m in ipairs(masks) do
-    local pattern = m.pattern or m.regex
-    if pattern then
-      local replacement = m.mask
-      if replacement == nil then
-        replacement = m.replace or ""
-      end
-
-      local ok, res = pcall(ngx_re_gsub, v, pattern, replacement, "jo")
-      if ok and res then
-        v = res
-      end
-    end
+    local replacement = m.mask or ""
+    v = ngx_re_gsub(v, m.pattern, replacement, "jo")
   end
 
   return v
@@ -135,16 +74,13 @@ function QPToLogsMasks:access(conf)
   end
 
   -- Nothing to process when no query keys are configured.
-  local query_params_to_log = normalize_query_params(conf)
+  local query_params_to_log = conf.query_params_to_log
   if #query_params_to_log == 0 then
     return
   end
 
-  local query_params_log_mask = normalize_masks(conf)
+  local query_params_log_mask = conf.query_params_log_mask
   local args = kong.request.get_query()
-  if type(args) ~= "table" then
-    return
-  end
 
   local qp_log = {}
 
@@ -160,7 +96,7 @@ function QPToLogsMasks:access(conf)
     return
   end
 
-  local final = table_concat(qp_log, conf.separator or "|")
+  local final = table_concat(qp_log, conf.separator)
   -- Keep final value in request context for use during log phase.
   kong.ctx.plugin.qp_log_masks_value = final
 end

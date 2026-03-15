@@ -15,7 +15,7 @@ services:
   - name: qp-mask-service
     url: http://httpbin:80/anything
     routes:
-      # Baseline route: header enabled + standard token/user masking.
+      # Baseline route: standard token/user masking into log serializer.
       - name: qp-mask-route
         paths:
           - /mask
@@ -32,12 +32,10 @@ services:
                 - user
               separator: "|"
               output_field: qp_log
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log
               query_params_log_mask:
                 - pattern: "(.{4}).+(.{2})"
                   mask: "$1***$2"
-      # Same mask config, but header output intentionally disabled.
+      # Alternate route using same behavior with a different output field.
       - name: qp-mask-no-header-route
         paths:
           - /mask-no-header
@@ -54,7 +52,6 @@ services:
                 - user
               separator: "|"
               output_field: qp_log_no_header
-              add_response_header: false
               query_params_log_mask:
                 - pattern: "(.{4}).+(.{2})"
                   mask: "$1***$2"
@@ -71,58 +68,14 @@ services:
           - name: qp-log-mask
             config:
               enabled: false
-              error_format: default
               query_params_to_log:
                 - token
                 - user
               separator: "|"
               output_field: qp_log_disabled
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Disabled
               query_params_log_mask:
                 - pattern: "(.{4}).+(.{2})"
                   mask: "$1***$2"
-      # Legacy config compatibility route using query_params + masks.
-      - name: qp-mask-legacy-route
-        paths:
-          - /mask-legacy
-        plugins:
-          - name: key-auth
-            config:
-              key_names:
-                - apikey
-              hide_credentials: true
-          - name: qp-log-mask
-            config:
-              query_params: token,user
-              separator: "|"
-              output_field: qp_log_legacy
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Legacy
-              masks:
-                - regex: "(.{4}).+(.{2})"
-                  replace: "$1***$2"
-      # Invalid regex should be ignored safely, without failing request.
-      - name: qp-mask-invalid-pattern-route
-        paths:
-          - /mask-invalid-pattern
-        plugins:
-          - name: key-auth
-            config:
-              key_names:
-                - apikey
-              hide_credentials: true
-          - name: qp-log-mask
-            config:
-              query_params_to_log:
-                - token
-              separator: "|"
-              output_field: qp_log_invalid_pattern
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Invalid-Pattern
-              query_params_log_mask:
-                - pattern: "["
-                  mask: "never_used"
       # Mask key omitted means replacement defaults to empty string.
       - name: qp-mask-empty-mask-route
         paths:
@@ -139,11 +92,9 @@ services:
                 - token
               separator: "|"
               output_field: qp_log_empty_mask
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Empty-Mask
               query_params_log_mask:
                 - pattern: "xyz123"
-      # Custom separator/header route for output formatting checks.
+      # Custom separator route for output formatting checks.
       - name: qp-mask-custom-format-route
         paths:
           - /mask-custom-format
@@ -160,12 +111,10 @@ services:
                 - user
               separator: "||"
               output_field: qp_log_custom
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Custom
               query_params_log_mask:
                 - pattern: "(.{4}).+(.{2})"
                   mask: "$1***$2"
-      # Empty query list should produce no output even with header enabled.
+      # Empty query list should produce no output.
       - name: qp-mask-empty-list-route
         paths:
           - /mask-empty-list
@@ -180,8 +129,6 @@ services:
               query_params_to_log: []
               separator: "|"
               output_field: qp_log_empty_list
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Empty-List
       # Advanced route to validate ordered mask rules and edge cases.
       - name: qp-mask-advanced-route
         paths:
@@ -202,8 +149,6 @@ services:
                 - password
               separator: "|"
               output_field: qp_log_advanced
-              add_response_header: true
-              response_header_name: X-Kong-QP-Log-Advanced
               query_params_log_mask:
                 # Exact value replacement.
                 - pattern: "xyz123"
