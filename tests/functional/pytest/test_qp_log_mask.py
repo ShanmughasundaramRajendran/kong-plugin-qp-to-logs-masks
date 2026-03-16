@@ -10,7 +10,7 @@ class TestQpLogMaskFunctional:
 
     def test_does_not_expose_masked_value_in_response_headers(self, base_url, default_headers):
         response = requests.get(
-            f"{base_url}/mask?token=abcDEF123456&user=cognizant",
+            f"{base_url}/mask?token=abcDEF123456&user=demo_user",
             headers=default_headers,
             timeout=10,
         )
@@ -22,7 +22,7 @@ class TestQpLogMaskFunctional:
 
     def test_no_headers_for_empty_query_values(self, base_url, default_headers):
         response = requests.get(
-            f"{base_url}/mask?token=&user=cognizant",
+            f"{base_url}/mask?token=&user=demo_user",
             headers=default_headers,
             timeout=10,
         )
@@ -110,7 +110,7 @@ class TestQpLogMaskFunctional:
 
     def test_no_header_when_route_config_disables_it(self, base_url, default_headers):
         response = requests.get(
-            f"{base_url}/mask-no-header?token=abcDEF123456&user=cognizant",
+            f"{base_url}/mask-no-header?token=abcDEF123456&user=demo_user",
             headers=default_headers,
             timeout=10,
         )
@@ -118,7 +118,7 @@ class TestQpLogMaskFunctional:
 
     def test_plugin_disabled_flag_route(self, base_url, default_headers):
         response = requests.get(
-            f"{base_url}/mask-plugin-disabled?token=abcDEF123456&user=cognizant",
+            f"{base_url}/mask-plugin-disabled?token=abcDEF123456&user=demo_user",
             headers=default_headers,
             timeout=10,
         )
@@ -134,7 +134,7 @@ class TestQpLogMaskFunctional:
 
     def test_no_custom_response_header_name_emitted(self, base_url, default_headers):
         response = requests.get(
-            f"{base_url}/mask-custom-format?token=abcDEF123456&user=cognizant",
+            f"{base_url}/mask-custom-format?token=abcDEF123456&user=demo_user",
             headers=default_headers,
             timeout=10,
         )
@@ -142,7 +142,7 @@ class TestQpLogMaskFunctional:
 
     def test_empty_query_params_to_log_list(self, base_url, default_headers):
         response = requests.get(
-            f"{base_url}/mask-empty-list?token=abcDEF123456&user=cognizant",
+            f"{base_url}/mask-empty-list?token=abcDEF123456&user=demo_user",
             headers=default_headers,
             timeout=10,
         )

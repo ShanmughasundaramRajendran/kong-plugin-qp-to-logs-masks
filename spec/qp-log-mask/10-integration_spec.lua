@@ -135,7 +135,7 @@ describe("qp-log-mask plugin integration", function()
   end)
 
   it("returns success on standard route", function()
-    local res = client:get("/mask?token=abcDEF123456&user=cognizant")
+    local res = client:get("/mask?token=abcDEF123456&user=demo_user")
     assert_proxy_status(res)
   end)
 
@@ -150,7 +150,7 @@ describe("qp-log-mask plugin integration", function()
   end)
 
   it("returns success on alternate route", function()
-    local res = client:get("/mask-no-header?token=abcDEF123456&user=cognizant")
+    local res = client:get("/mask-no-header?token=abcDEF123456&user=demo_user")
     assert_proxy_status(res)
   end)
 
@@ -160,12 +160,12 @@ describe("qp-log-mask plugin integration", function()
   end)
 
   it("returns success for empty query param values", function()
-    local res = client:get("/mask?token=&user=cognizant")
+    local res = client:get("/mask?token=&user=demo_user")
     assert_proxy_status(res)
   end)
 
   it("does nothing when plugin is disabled", function()
-    local res = client:get("/mask-plugin-disabled?token=abcDEF123456&user=cognizant")
+    local res = client:get("/mask-plugin-disabled?token=abcDEF123456&user=demo_user")
     assert_proxy_status(res)
   end)
 
@@ -175,12 +175,12 @@ describe("qp-log-mask plugin integration", function()
   end)
 
   it("returns success with custom separator route", function()
-    local res = client:get("/mask-custom-format?token=abcDEF123456&user=cognizant")
+    local res = client:get("/mask-custom-format?token=abcDEF123456&user=demo_user")
     assert_proxy_status(res)
   end)
 
   it("does nothing when query_params_to_log is empty", function()
-    local res = client:get("/mask-empty-list?token=abcDEF123456&user=cognizant")
+    local res = client:get("/mask-empty-list?token=abcDEF123456&user=demo_user")
     assert_proxy_status(res)
   end)
 end)

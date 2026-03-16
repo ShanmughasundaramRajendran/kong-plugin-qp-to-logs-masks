@@ -71,7 +71,7 @@ lint:
 
 ## test-smoke: Run local smoke checks against /mask route
 test-smoke:
-	@curl -s -H "apikey: $(APIKEY_C1)" "$(BASE_PROXY_URL)/mask?token=abcDEF123456&user=cognizant" -D /tmp/qp-mask-headers.txt -o /tmp/qp-mask-body.json
+	@curl -s -H "apikey: $(APIKEY_C1)" "$(BASE_PROXY_URL)/mask?token=abcDEF123456&user=demo_user" -D /tmp/qp-mask-headers.txt -o /tmp/qp-mask-body.json
 	@echo "Smoke test passed"
 
 ## pongo-up: Start pongo environment

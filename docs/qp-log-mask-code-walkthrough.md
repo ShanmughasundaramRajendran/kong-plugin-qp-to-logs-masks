@@ -33,7 +33,7 @@ sequenceDiagram
     participant Plugin as qp-log-mask
     participant Serializer as Kong Log Serializer
 
-    Client->>Kong: GET /mask?token=abcDEF123456&user=cognizant
+    Client->>Kong: GET /mask?token=abcDEF123456&user=demo_user
     Kong->>Plugin: access(conf)
     Plugin->>Plugin: normalize_query_params(conf)
     Plugin->>Plugin: normalize_masks(conf)
@@ -100,7 +100,7 @@ log(conf):
 
 Input request:
 ```http
-GET /mask?token=abcDEF123456&user=cognizant
+GET /mask?token=abcDEF123456&user=demo_user
 ```
 
 Config:
@@ -115,7 +115,7 @@ output_field: "qp_log"
 
 Transformation:
 1. `token=abcDEF123456` -> `abcD***56`
-2. `user=cognizant` -> `cogn***nt`
+2. `user=demo_user` -> `cogn***nt`
 3. Build entries:
    - `QP_token:abcD***56`
    - `QP_user:cogn***nt`
