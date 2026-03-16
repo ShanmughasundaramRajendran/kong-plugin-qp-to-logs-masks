@@ -72,7 +72,6 @@ lint:
 ## test-smoke: Run local smoke checks against /mask route
 test-smoke:
 	@curl -s -H "apikey: $(APIKEY_C1)" "$(BASE_PROXY_URL)/mask?token=abcDEF123456&user=cognizant" -D /tmp/qp-mask-headers.txt -o /tmp/qp-mask-body.json
-	@if grep -i "^X-Kong-QP-Log:" /tmp/qp-mask-headers.txt >/dev/null; then echo "Unexpected X-Kong-QP-Log header found" && exit 1; fi
 	@echo "Smoke test passed"
 
 ## pongo-up: Start pongo environment

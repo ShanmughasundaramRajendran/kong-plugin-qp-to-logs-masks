@@ -58,7 +58,6 @@ Smoke check:
 ```bash
 curl -i -H "apikey: demo-consumer-apikey" \
   "http://localhost:8000/mask?token=abcDEF123456&user=cognizant"
-# Expected: no X-Kong-QP-Log response header
 ```
 
 ## Tests
